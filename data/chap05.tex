@@ -20,7 +20,7 @@
 
 \begin{figure*}[ht]
     \centering
-    \includegraphics[width=1255]{figures/cnn1}
+    \includegraphics[width=\linewidth]{figures/cnn1}
     \caption{卷积神经网络实例}
     \label{fig:cnn1}
 \end{figure*}
@@ -29,18 +29,18 @@
 
 卷积需要输入两个参数，实质是二维空间滤波，滤波的性质与卷积核选择有关，CNN 的卷积是在一个 2-D 卷积核与 2-D 输入映射之间，在各通道分别完成的。
 
-我们假设单一通道输入的空间坐标为 {\displaystyle (x,y)}，kernel 大小是 {\displaystyle p \times q}，kernel 权重为 {\displaystyle w}，图像亮度值是 {\displaystyle v} ，卷积过程就是 kernel 所有权重与其在输入图像上对应元素亮度之和，可以表示为：{\displaystyle conv_{x,y} = \sum_i^{p*q}w_i v_i}。
+我们假设单一通道输入的空间坐标为 ${\displaystyle (x,y)}$，kernel 大小是 ${\displaystyle p \times q}$，kernel 权重为 ${\displaystyle w}$，图像亮度值是 ${\displaystyle v}$，卷积过程就是 kernel 所有权重与其在输入图像上对应元素亮度之和，可以表示为：${\displaystyle conv_{x,y} = \sum_i^{p*q}w_i v_i}$。
 
 下面即是一个例子：
 
 \begin{figure*}[ht]
     \centering
-    \includegraphics[width=600]{figures/cnn_conv}
+    \includegraphics[width=\linewidth]{figures/cnn_conv}
     \caption{卷积层的例子}
     \label{fig:cnn_conv}
 \end{figure*}
 
-将 kernel 随 {\displaystyle (x,y)} 平移扫描，即可以得到输出空间。需要特别说明的是，卷积层可能包含多个 kernel，用以抓取多个特征；扫描步长、方向也可能有所不同。
+将 kernel 随 ${\displaystyle (x,y)}$ 平移扫描，即可以得到输出空间。需要特别说明的是，卷积层可能包含多个 kernel，用以抓取多个特征；扫描步长、方向也可能有所不同。
 
 \subsection{长短时记忆网络}
 
