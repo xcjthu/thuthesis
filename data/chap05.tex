@@ -3,6 +3,49 @@
 
 对于每一个模块，我们将分别从任务的描述定义、算法的创新点、算法模型细节三个方面来进行详细阐述。
 
+\section{背景知识}
+\subsection{卷积神经网络}
+卷积神经网络（Convolutional Neural Network, CNN）是一种前馈神经网络，它的人工神经元可以响应一部分覆盖范围内的周围单元，对于大型图像、文字等处理有出色表现。
+
+卷积神经网络通常包含以下结构：
+
+\begin{itemize}
+	\item \textbf{卷积层（Convolutional layer）}：卷积神经网路中每层卷积层由若干卷积单元组成，每个卷积单元的参数都是经过\textbf{反向传播算法}训练得到的。卷积运算的目的是提取输入的不同特征。
+	\item \textbf{线性整流层（Rectified Linear Units layer, ReLU layer）}：使用线性整流作为激活函数。它可以增强判定函数和整个神经网络的非线性特性，而本身并不会改变卷积层。
+	\item \textbf{池化层（Pooling layer）}：通常在卷积层之后会得到维度很大的特征，将特征切成几个区域，取其最大值或平均值，得到新的、维度较小的特征。
+	\item \textbf{全连接层（Fully-Connected layer）}：完成从输入到标签集的映射，即分类。
+\end{itemize}
+
+下面是一个卷积神经网络各层应用的实例：
+
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=1255]{figures/cnn1}
+    \caption{卷积神经网络实例}
+    \label{fig:cnn1}
+\end{figure*}
+
+卷积神经网络中最基础的操作是卷积。基础 CNN 所用的卷积是一种 2-D 卷积。也就是说，卷积核（kernal）只能在 x,y 上滑动位移，不能进行深度（跨通道）位移。
+
+卷积需要输入两个参数，实质是二维空间滤波，滤波的性质与卷积核选择有关，CNN 的卷积是在一个 2-D 卷积核与 2-D 输入映射之间，在各通道分别完成的。
+
+我们假设单一通道输入的空间坐标为 {\displaystyle (x,y)}，kernel 大小是 {\displaystyle p \times q}，kernel 权重为 {\displaystyle w}，图像亮度值是 {\displaystyle v} ，卷积过程就是 kernel 所有权重与其在输入图像上对应元素亮度之和，可以表示为：{\displaystyle conv_{x,y} = \sum_i^{p*q}w_i v_i}。
+
+下面即是一个例子：
+
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=600]{figures/cnn_conv}
+    \caption{卷积层的例子}
+    \label{fig:cnn_conv}
+\end{figure*}
+
+将 kernel 随 {\displaystyle (x,y)} 平移扫描，即可以得到输出空间。需要特别说明的是，卷积层可能包含多个 kernel，用以抓取多个特征；扫描步长、方向也可能有所不同。
+
+\subsection{长短时记忆网络}
+
+\subsection{条件随机场}
+
 
 \section{判决预测}
 \subsection{任务描述}
