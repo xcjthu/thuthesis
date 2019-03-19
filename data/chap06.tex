@@ -82,4 +82,15 @@ Ours      & \textbf{86.3}  & \textbf{81.9} & \textbf{71.1} & \textbf{73.4} & \te
 
 从实验结果可见，我们的模型在关键词提取任务上实现了大幅的提升。相比于传统的字级别的序列标注模型与词级别的序列标注模型，我们使用的模型综合了字级别的信息与词级别的信息，以此避免了词级别模型过度依赖分词效果与字级别模型无法捕捉到足够信息的缺点。
 
+\begin{table}[]
+\center
+\begin{tabular}{llll}
+\hline
+       & Precision  & Recall & F1    \\ \hline
+CRF        & 58.16  & 41.61 & 48.51 \\
+BiLSTM-CRF & 62.45  & 61.46 & 63.47 \\ \hline
+Ours       & \textbf{68.14}  & \textbf{67.83} & \textbf{67.99} \\ \hline
+\end{tabular}
+\caption{关键词抽取算法效果}
+\end{table}
 
