@@ -16,14 +16,15 @@
 	\item \textbf{全连接层（Fully-Connected layer）}：完成从输入到标签集的映射，即分类。
 \end{itemize}
 
-下面是一个卷积神经网络各层应用的实例：
-
-\begin{figure*}[ht]
+\begin{figure*}[h]
     \centering
     \includegraphics[width=\linewidth]{figures/cnn1}
     \caption{卷积神经网络实例}
     \label{fig:cnn1}
 \end{figure*}
+
+图~\ref{fig:cnn1}是一个卷积神经网络各层应用的实例：
+
 
 卷积神经网络中最基础的操作是卷积。基础 CNN 所用的卷积是一种 2-D 卷积。也就是说，卷积核（kernal）只能在 x,y 上滑动位移，不能进行深度（跨通道）位移。
 
@@ -60,12 +61,7 @@
 
 2)	模拟法官判案过程，提出判断案件判案要素作为中间任务，来大幅提升相关任务的效果。
 
-\begin{figure*}[ht]
-    \centering
-    \includegraphics[width=\linewidth]{figures/model1}
-    \caption{判决预测模型示意图}
-    \label{fig:model1}
-\end{figure*}
+
 
 \subsection{算法模型}
 算法使用了LSTM作为模型的编码器，使用了全连接神经网络作为输出层。利用了多任务学习的框架，将多个任务进行联合训练得到了效果的提升。
@@ -77,6 +73,13 @@
 	\item \textbf{预测层}：我们利用了LSTM Cell来捕获不同任务之间的依赖关系，将不同的任务获得的文本向量当做一个序列，使得任务之间可以获取相应被依赖任务的信息，从而提升相应的效果。
 	\item \textbf{输出层}：最后，我们应用了全连接神经网络，将包含任务信息的向量映射到相应的分类中。
 \end{itemize}
+
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\linewidth]{figures/model1}
+    \caption{判决预测模型示意图}
+    \label{fig:model1}
+\end{figure*}
 
 
 \section{关键词抽取}
