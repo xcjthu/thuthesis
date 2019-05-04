@@ -85,13 +85,118 @@ LSTM 相对 RNN 而言解决了长依赖关系学习的问题，能够记住长�
 \fi
 
 \subsection{条件随机场}
+条件随机场（Conditional random field，CRF）是条件概率分布模型 $P(Y|X)$，该公式表示的是，当给定一组输入随机变量 $X$ 的条件下另一组输出随机变量的值为 $Y$ 的马尔可夫随机场，也就是说 CRF 的特点为假设输出随机变量 $Y$ 构成马尔可夫随机场。
+
+接下来将首先简单介绍以下马尔可夫场，马尔可夫随机场（Markov random field）的一个别称为概率无向图模型(Probabilistic undirected graphical model)。该模型的标准定义为：设有联合概率分布 $P(V)$ 由无向图 $G=(V, E)$ 表示，其中 $V$ 为图 $G$ 中的节点，用来表示随机变量，$E$ 表示图 $G$ 中的边，用来表示随机变量间的依赖关系。如果联合概率分布 $P(V)$ 满足成对、局部或全局马尔可夫性，就称此联合概率分布为概率无向图模型或马尔可夫随机场。
+
+设有一组随机变量 $Y$ ，其联合分布为 $P(Y)$ 由无向图 $G=(V, E)$ 表示。图 $G$ 的一个节点 $v \in V$ 表示一个随机变量 $Y_v$ ，一条边 $e \in E$ 就表示两个随机变量间的依赖关系。
+
+\begin{itemize}
+	\item 成对马尔可夫性。$u, v$ 为无向图 $G$ 中的任意两个没有边连接的节点，其他所有节点为 $O$ ，成对马尔可夫性指：给定 $Y_O$ 的条件下，$Y_u$ 和 $Y_v$ 条件独立。
+	%\begin{figure*}
+	%	\centering
+	%	\includegraphics[width=\linewidth/2]{figures/Markov1.png}
+    %	\label{fig:Markov1}
+	%\end{figure*}
+	\begin{equation}
+		P(Y_{u}, Y_{v} | Y_{O})=P\left(Y_{u} | Y_{O}\right) P\left(Y_{v} | Y_{O}\right)
+	\end{equation}
+	
+	\item 局部马尔可夫性。设无向图 $G$ 的任一节点 $v$，$W$ 是与 $v$ 有边相连的所有节点，$O$ 是 $v, W$ 外的所有的其他节点，局部马尔可夫性指：给定 $Y_W$ 的条件下，$Y_v$ 和 $Y_O$ 条件独立。
+	\begin{figure*}[ht]
+		\centering
+		\includegraphics[width=\linewidth/2]{figures/Markov2.png}
+		\caption{局部马尔科夫性示意图}
+    	\label{fig:Markov2}
+	\end{figure*}
+	\begin{equation}
+		P\left(Y_{v}, Y_{O} | Y_{W}\right)=P\left(Y_{v} | Y_{W}\right) P\left(Y_{O} | Y_{W}\right)
+	\end{equation}
+	
+	\item 全局马尔可夫性。设节点集合 $A,B$ 是在无向图 $G$ 中被节点集合 $C$ 分开的任意节点集合，全局马尔可夫性指：给定 $Y_C$ 的条件下，$Y_A$ 和 $Y_B$ 条件独立。
+	\begin{figure*}[ht]
+		\centering
+		\includegraphics[width=\linewidth/2]{figures/Markov3.png}
+		\caption{全局马尔科夫性示意图}
+    	\label{fig:Markov3}
+	\end{figure*}
+	\begin{equation}
+		P\left(Y_{A}, Y_{B} | Y_{C}\right)=P\left(Y_{A} | Y_{C}\right) P\left(Y_{B} | Y_{C}\right)
+	\end{equation}
+\end{itemize}
+
+CRF可以看作是最大熵马尔可夫模型在序列标注问题上的一种推广。这里我们介绍我们平台中用到的用于序列标注问题的线性链条件随机场（linear chain conditional CRF），是根据输入序列来预测输出序列的判别式模型。
+	\begin{figure*}[ht]
+		\centering
+		\includegraphics[width=\linewidth]{figures/linear_chain_CRF.png}
+		\caption{线性链条件随机场示意图}
+    	\label{fig:Markov3}
+	\end{figure*}
+
+\begin{equation}
+P\left(Y_{v} | X, Y_{w}, w \neq v\right)=P\left(Y_{v} | X, Y_{w}, w \sim v\right)
+\label{CRF_11}
+\end{equation}
+
+如果随机变量 $Y$ 构成一个由无向图 $G=(V, E)$ 表示的马尔可夫随机场，对任意节点 $v \in V$ 公式\ref{CRF_11}都成立，则称 $P(Y|X)$ 是条件随机场。
+
+对于序列标注问题，$X$ 是需要标注的输入观测序列，$Y$ 是观测序列对应的标记序列（状态序列）。在测试过程，对于给定的观测序列，模型需要求出条件概率最大的输出序列。
+
+其中条件概率被定义为：
+%\begin{equation}
+	% P(y|x) = \frac{1}{Z} exp\left{(}\sum_{j}\sum_{i=1}^{n-1}\lambda_{j}t_{j}(y_{i+1}, y_i, x, i) + \sum_{k}\sum_{i=1}^{n}\mu_{k}s_{k}(y_i. x. i) \right{)}
+	\begin{equation}
+P(y | x)=\frac{1}{Z} \exp \left(\sum_{j} \sum_{i=1}^{n-1} \lambda_{j} t_{j}\left(y_{i+1}, y_{i}, x, i\right)+\sum_{k} \sum_{i=1}^{n} \mu_{k} s_{k}\left(y_{i}, x, i\right)\right)
+\end{equation}
+%\end{equation}
+其中，$t_j(y_{i+1}, y_i, x, i)$ 是定义在观测序列的两个相邻标记位置上的转移特征函数，用于刻画相邻变量之间的相关关系以及观测序列对他们的影响。 $s_k(y_i, x, i)$ 是定义在观测序列的标记位置 $i$ 上的状态特征函数，用于刻画观测序列对标记变量的影响，$\lambda_j$ 和 $\mu_k$ 为参数，$Z$ 为规范化因子。模型通过极大似然估计法进行参数训练与优化。
 
 \subsection{Word2vec算法}
 Word2vec算法是Google在2013年开源的一个可以将词语映射到低纬向量空间的的算法。该算法就离散的词语转化成连续向量空间中的向量，并可以利用向量之间的关系计算出词语的相似度，同时作为一种词语的表示，word2vec也受到了非常多学者的欢迎。
 
-Word2vec算法中有两类主要模型，分别是 $CBOW$ ($Continuous Bag-of-Words Model$) 和 $Skip-gram$ ($Continuous Skip-gram Model$) 模型。两种模型都采用神经网络计算语言模型，结构都大致可分为输入层、投影层和输出层三层结构。
+Word2vec算法中有两类主要模型，分别是 CBOW (Continuous Bag-of-Words Model) 和 Skip-gram (Continuous Skip-gram Model) 模型。两种模型都采用神经网络计算语言模型，结构都大致可分为输入层、投影层和输出层三层结构。
 
-在这里我们重点介绍 $CBOW$ 模型。它是在已知当前词 $x_i$ 的上下文 $\{x_{i−2}, x_{i−1}, x_{i+1}, x_{i+2}\}$ 词向量 $\{w_{i−2}, w_{i−1}, w_{i+1}, w_{i+2}\}$ 的基础上预测当前词 $x_i$ 的词 向量 $w_i$，网络结构如图
+在这里我们重点介绍 CBOW 模型。它是在已知当前词 $x_i$ 的上下文 $\{x_{i−2}, x_{i−1}, x_{i+1}, x_{i+2}\}$ 词向量 $\{w_{i−2}, w_{i−1}, w_{i+1}, w_{i+2}\}$ 的基础上预测当前词 $x_i$ 的词 向量 $w_i$。例如，对于句子 “The quick brown fox jumps over lazy dog” ，预测 fox 这个词时，可以使用 quick、brown、jumps、over 这四个词，它们构成了 fox 的上下文。这样，我们就可以从文本中提取一系列的训练数据。模型得到上下文以后，将这些词的 one-hot 编码累加起来，输入神经网络，然后神经网络进行一些变换，其目标为得到 fox 这个词的 one-hot 编码。训练好之后的神经网络中，隐藏层的权重矩阵就是词嵌入后的向量了。网络结构如图\ref{fig:CBOW}：
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\linewidth]{figures/CBOW.png}
+    \caption{CBOW 模型网络结构}
+    \label{fig:CBOW}
+\end{figure*}
+
+word2vec中CBOW模型大致可分为以下几个部分：
+\begin{enumerate}
+	\item \textbf{输入层}。包含当前词 $x_i$ 的上下文 $Context(x_i)$ 即包含 $\{x_{i−c},..., x_{i−1}, x_{i+1},..., x_{i+c}\}$ 在内的 $2c$ 个词向量 $\{w_{i−c},..., w_{i−1}, w_{i+1},...,w_{i+c}\}$;
+	\item \textbf{投影层}。使用输入层的 $2c$ 个词向量作求和累加，并将其作为下一层的输入，即
+		\begin{equation}
+			X_{w} = \sum w_{i+j}, j \in (-c,...,-1,1,...,c)
+		\end{equation}
+	\item \textbf{输出层}。输出层是一颗 Huffman 树。它的叶子节点代表语料中的词语，以每一个词语在数据集中出现的次数作为权重来构建的
+\end{enumerate}
+对于 CBOW 语言模型，模型的训练目标函数如式\ref{ggg}，其中，C 为数据集
+中所有词语对应的字典:
+	\begin{equation}
+		L=\sum_{w \in C} \log (p(w | Context(w)))
+	\label{ggg}
+	\end{equation}
+	
+对于这颗最优二叉树，每一个叶子节点即为数据集构成的字典中的某一词语 $w$，对于任一叶子节点必定存在一条路径 $p^w$，从根节点到该叶子节点(且路 径唯一)。路径 $p^w$ 上有 $l_{w} - 1$ 分支，每个分支在进行路径选择时都会产生分类概率，这些选择类似于分类任务。将这些概率累乘起来，就是\ref{ggg}函数中的 $p(w|Context(w))$，具体如下:
+	\begin{equation}
+		p(w | \text {Context }(w))=\prod_{j=2}^{l w} p\left(d_{j}^{w} | x_{w}, \theta_{j-1}^{w}\right)
+	\end{equation}
+	
+进而二分类函数利用 sigmoid 函数，结合式子\ref{ggg}，则最终的目标函数为:
+\begin{equation}
+L(w, j)=\left(1-d_{j}^{w}\right) \cdot \log \left[\sigma\left(x_{w}^{T} \theta_{j-1}^{w}\right)\right]+d_{j}^{w} \cdot \log \left[1-\sigma\left(x_{w}^{T} \theta_{j-1}^{w}\right)\right]
+\end{equation}
+
+其中 sigmoid 函数是神经网络常用的激活函数，式子如下:
+\begin{equation}
+\sigma(x)=\frac{1}{1+e^{-x}}
+\end{equation}
+
+在 word2vec 算法中主要是采用随机梯度上升的方法对目标函数进行优化，不断调整函数中的变量最终达到目标，生成最终的模型。随机梯度上升法的做 法是:每取一组数据 $(w, \text{Context}(w))$，就对目标函数中(相关)参数做一次优化和调整，使其达到局部最大值。在优化的过程中，每一层(主要是三层)参数不断互相影响和优化。通过一定的轮数和目标函数的大小，最终停止优化，生成最后的语言模型。
+
 
 \section{判决预测}
 \subsection{任务描述}
@@ -378,7 +483,7 @@ Word2vec算法中有两类主要模型，分别是 $CBOW$ ($Continuous Bag-of-Wo
 	
 其中$d$为文书而$w_1,w_2,⋯,w_n$代表这文书从头至尾的$n$个词，那么我们可以定义在所有文书上的词的集合为：
 	\begin{equation}
-		W = ={w_i |\forall d∈D,w_i∈d}
+		W = {w_i |\forall d∈D,w_i∈d}
 	\end{equation}
 	
 其中$D$为所有文档的集合，即遍历所有文书求到所出现词语的并集。那么对于每一个词（比如你好、中国等等），我们可以为这个词定义属于这个词的专属特征。设我们现在想要考察的词为$w$，那么我们可以定义词$w$在文档$d$中的词频为$w$在文档$d$中的出现次数，表示为：
@@ -490,7 +595,7 @@ Word2vec算法中有两类主要模型，分别是 $CBOW$ ($Continuous Bag-of-Wo
 	\end{equation}
 
 使用多探头的局部敏感度哈希方法，我们能够将所需要的哈希函数的数量从$r \geq 100$降低至$r \approx 20$，从而大大提升了我们特征匹配模型的效率，也让我们的特征匹配模型能够投入实际的使用。
-
+\\
 \iffalse
 如上所述，改算法主要分成以下两步：
 
@@ -500,5 +605,8 @@ Word2vec算法中有两类主要模型，分别是 $CBOW$ ($Continuous Bag-of-Wo
 
 3）	相关程度重排序，利用判决预测模块将第2步获得的文书，转化成包含语义信息的文本向量，通过向量的距离来判断文书与输入案情的相关程度，按照相关程度对文书进行重排序。
 \fi
+
+综上所述，JudgeAI平台大致可划分为以上三个模块：判决预测模块、关键词抽取模块、类案检索模块。在各个模块中，我们结合了法律领域特有的一些知识与特点，实现了模型效果的全面提升。
+
 
 
