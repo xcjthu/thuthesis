@@ -63,26 +63,60 @@ CNN的本质是一个多层感知机，成功的原因在于它所采用的局�
 出现在 CNN 最后的全连接层的主要目的是分类。这与神经网络中的全连接层是相同的。
 
 CNN 网络的训练一般使用反向传播（Back Propagation）算法。同样地，这即是传统神经网络训练的常用算法。
+\fi
 
 
 \subsection{长短时记忆网络}
+长短时记忆神经网络(Long Short-term Memory Networks,LSTM)是一种循环神经网络(Recurrent Neural Network, RNN)特殊的类型，可以学习长期依赖信息。循环神经网络(Recurrent NN)算法的弊端在于，随着时间的流逝，网络层数的增多，会产生梯度消失或梯度爆炸等问题。\cite{hochreiter1997long} 提出 LSTM，希望能够解决神经网络中的长期依赖问题。
 
-长短时记忆网络（Long short-term memory, LSTM）是一种用于深度学习领域的循环神经网络（Recurrent Neural Network, RNN）架构。与其他神经网络架构不同，LSTM 网络非常适合基于时间序列数据进行分类、处理和预测。
+% LSTM记忆单元具有遗忘门、输入门和输出门，以此实现了长短时记忆机制。LSTM相比于传统循环神经网络与全连接神经网络更擅长处理序列数据。
 
-循环神经网络相比全连接神经网络更擅长处理序列数据，与传统神经网络不同，它们是具有循环的网络，这将允许信息持续存在。
+所有递归神经网络都具有神经网络重复模块链的形式。 在标准RNN中，该重复模块将具有非常简单的结构，例如单个tanh层。LSTM也具有这种类似链的结构，但LSTM其中的重复模块具有不同的结构。每个模块可分为输入门、遗忘门、输出门。其大致框架见\ref{fig:LSTM}。
+\begin{figure*}[ht]
+	\centering
+	\includegraphics[width=\linewidth]{figures/RNN.png}
+	\caption{RNN模型示意图}
+    \label{fig:RNN}
+\end{figure*}
 
-咕咕咕，这里有一张图
+LSTM的关键是单元状态，它直接沿着整个链传递，只有一些次要的线性交互。信息很容易沿着单元状态而在序列之间传递。每个LSTM单元都有三个输入，分别是上一个LSTM单元的细胞状态 $C_{t-1}$，上一个细胞的隐状态 $h_{i-1}$，与该时间点对应的序列输入 $x_t$。
 
-上图是一个示意图，一组神经网络 A 接收某些输入 ${\displaystyle x_t}$，并输出一个值 ${\displaystyle h_t}$。循环允许信息从网络的一个步骤传递到下一个。
+我们的LSTM的第一步是确定我们将从细胞状态中丢弃哪些信息。 该判定由称为“遗忘门”的 sigmiod 层决定。它查看 $h_{t-1}$ 和 $x_t$，并为单元状态 $C_{t-1}$ 中的每个数字输出0到1之间的数字。1代表完全保持，而0代表完全忘记。即
+\begin{equation}
+f_{t}=\sigma\left(W_{f} \cdot\left[h_{t-1}, x_{t}\right]+b_{f}\right)
+\end{equation}
 
-RNN 的重要能力在于它可以将以前的信息连接到当前任务，例如使用先前的视频帧来帮助对当前帧的理解。然而，对于较长距离的历史信息，RNN 仍无法有效地将其利用。
+下一步是确定我们将在单元状态中存储哪些新信息。这有两个部分。首先，称为“输入门”的 sigmoid 层决定我们将更新哪些值。接下来，tanh 层创建可以添加到状态的新候选值 $C_t$ 的向量。 在下一步中，我们将结合这两个来创建状态更新。
+\begin{equation}
+i_{t}=\sigma\left(W_{i} \cdot\left[h_{t-1}, x_{t}\right]+b_{i}\right)
+\end{equation}
+\begin{equation}
+\tilde{C}_{t}=\tanh \left(W_{C} \cdot\left[h_{t-1}, x_{t}\right]+b_{C}\right)
+\end{equation}
 
-LSTM 相对 RNN 而言解决了长依赖关系学习的问题，能够记住长时间间隔内的信息。通常地，一个 LSTM 单元包含细胞、输入门、输出门和忘记门。其中，细胞（用${\displaystyle C_t}$ 表示）用于记录需要的长时间间隔的信息；输入门、输出门、忘记门具有删除或添加信息到细胞状态的能力，它们被用于维护细胞的状态、控制进出单元的信息流。
+接下来，我们将根据前面两步的计算结果，更新细胞状态，将 $C_{t-1}$ 更新至 $C_{t}$。
+\begin{equation}
+C_{t}=f_{t} * C_{t-1}+i_{t} * \tilde{C}_{t}
+\end{equation}
 
-下图是一个示意图：
+最后，计算出该单元的输出，此输出将基于我们的单元状态进行计算。首先，我们使用一个 sigmoid 层，它决定我们要输出的单元状态的哪些部分。然后，我们将单元状态设置为 tanh（将值推到介于-1和1之间）并将其乘以sigmoid 门的输出，以便我们只输出我们决定的部分。
+\begin{equation}
+o_{t}=\sigma\left(W_{o}\left[h_{t-1}, x_{t}\right]+b_{o}\right)
+\end{equation}
+\begin{equation}
+h_{t}=o_{t} * \tanh \left(C_{t}\right)
+\end{equation}
+这样，我们就完成了一个时间点的LSTM细胞状态的更新 $C_{t}$，并获得了相应的输出 $h_{t}$。
 
-咕咕咕，这里有另一张图
-\fi
+
+\begin{figure*}[ht]
+	\centering
+	\includegraphics[width=\linewidth]{figures/LSTM.png}
+	\caption{LSTM模型示意图}
+    \label{fig:LSTM}
+\end{figure*}
+
+
 
 \subsection{条件随机场}
 条件随机场（Conditional random field，CRF）是条件概率分布模型 $P(Y|X)$，该公式表示的是，当给定一组输入随机变量 $X$ 的条件下另一组输出随机变量的值为 $Y$ 的马尔可夫随机场，也就是说 CRF 的特点为假设输出随机变量 $Y$ 构成马尔可夫随机场。
@@ -98,6 +132,12 @@ LSTM 相对 RNN 而言解决了长依赖关系学习的问题，能够记住长�
 	%	\includegraphics[width=\linewidth/2]{figures/Markov1.png}
     %	\label{fig:Markov1}
 	%\end{figure*}
+	\begin{figure*}[ht]
+		\centering
+		\includegraphics[width=\linewidth/2]{figures/Markov1.png}
+		\caption{成对马尔科夫性示意图}
+    	\label{fig:Markov2}
+	\end{figure*}
 	\begin{equation}
 		P(Y_{u}, Y_{v} | Y_{O})=P\left(Y_{u} | Y_{O}\right) P\left(Y_{v} | Y_{O}\right)
 	\end{equation}
@@ -197,6 +237,13 @@ L(w, j)=\left(1-d_{j}^{w}\right) \cdot \log \left[\sigma\left(x_{w}^{T} \theta_{
 
 在 word2vec 算法中主要是采用随机梯度上升的方法对目标函数进行优化，不断调整函数中的变量最终达到目标，生成最终的模型。随机梯度上升法的做 法是:每取一组数据 $(w, \text{Context}(w))$，就对目标函数中(相关)参数做一次优化和调整，使其达到局部最大值。在优化的过程中，每一层(主要是三层)参数不断互相影响和优化。通过一定的轮数和目标函数的大小，最终停止优化，生成最后的语言模型。
 
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\linewidth]{figures/word2vec.png}
+    \caption{word2vec算法示意图}
+    \label{fig:word2vec_model}
+\end{figure*}
+
 
 \section{判决预测}
 \subsection{任务描述}
@@ -206,13 +253,13 @@ L(w, j)=\left(1-d_{j}^{w}\right) \cdot \log \left[\sigma\left(x_{w}^{T} \theta_{
 
 输入一段文本形式的案情描述，模型通过阅读文本获取其中蕴含的语义信息，将案情映射到高维向量空间，得到一个蕴含关键判案信息的文章向量。在该模块中，我们应用了多任务学习模型(multi-task learning)，利用相同的编码器捕获文本信息，通过对每一个任务设置不同的输出层，将高维文本向量映射到不同的输出结果之上。
 %再根据不同的任务，将文章向量喂给不同的输出层获得不同的分类结果。
-
 \begin{figure*}[ht]
     \centering
-    \includegraphics[width=\linewidth]{figures/model1}
-    \caption{判决预测模型示意图}
-    \label{fig:model1}
+    \includegraphics[width=\linewidth]{figures/JudgePrediction.png}
+    \caption{判决预测模型流程示意图}
+    \label{fig:JudgePrediction}
 \end{figure*}
+
 
 \subsection{创新点}
 我们将上述问题总结为文本分类问题，然而由于无法考虑到在实际法律场景运用中的数据不均衡、相似罪名难以区分等问题，传统文本分类模型在这些任务上无法取得令人满意的效果。通过观察基线模型的预测效果，我们发现了以下现有模型无法解决的难点：
@@ -251,9 +298,18 @@ L(w, j)=\left(1-d_{j}^{w}\right) \cdot \log \left[\sigma\left(x_{w}^{T} \theta_{
 \end{table}
 
 
+
+
 \subsection{算法模型}
 % 算法使用了LSTM作为模型的编码器，使用了全连接神经网络作为输出层。利用了多任务学习的框架，将多个任务进行联合训练得到了效果的提升。
 输入案情文本描述后，我们将其进行分词操作将案情描述划分为词语序列$x = \{x_{1}, x_{2}, ..., x_{n}\}$，其中$n$为词语数量。同时，模型适用于multi-task learning任务，我们假设有案件预测结果为$T$，其中$Y = \{y_{1}, y_{2}, ..., y_{|T|}\}$，$y_{i}$为第$i$个子任务的结果。
+
+\begin{figure*}[ht]
+    \centering
+    \includegraphics[width=\linewidth]{figures/model1}
+    \caption{判决预测模型示意图}
+    \label{fig:model1}
+\end{figure*}
 
 在该模型中，我们利用长短时记忆网络(LSTM)作为文本编码器，生成案情文本的表示向量。LSTM是循环神经网络的一个变种，通过在每一个循环单元引入输入门、遗忘门、输出门和记忆单元来帮助神经网络捕捉长序列的信息。考虑到我们的输入文本较长，为了捕捉长文本序列关系，我们采用了LSTM作为编码器。编码器结构可分成以下几层。
 \begin{itemize}
@@ -295,6 +351,7 @@ L(w, j)=\left(1-d_{j}^{w}\right) \cdot \log \left[\sigma\left(x_{w}^{T} \theta_{
 \end{equation}
 
 我们将算法运用于判案要素预测、罪名预测、法条预测、刑期预测四个任务上，四个任务的预测结果前后依赖，罪名预测结果依赖于要素预测结果，刑期预测结果与法条内容高度相关。因此，我们将四个任务按照上述顺序构成任务序列，利用任务之间的相关关系，提升各个任务的效果。具体实验结果见章节\ref{cha:result}。
+
 
 
 \section{关键词抽取}
